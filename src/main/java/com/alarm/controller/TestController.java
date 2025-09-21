@@ -109,17 +109,20 @@ public class TestController {
         
         String testMessage = String.format(
             "{\n" +
-            "  \"testMode\": true,\n" +
-            "  \"alertType\": \"RESOURCE_WARNING\",\n" +
-            "  \"timestamp\": \"%s\",\n" +
-            "  \"userId\": \"user123\",\n" +
-            "  \"action\": \"failed_authentication\",\n" +
-            "  \"severity\": \"WARNING\",\n" +
-            "  \"attempts\": \"3\",\n" +
-            "  \"ip\": \"192.168.1.200\",\n" +
-            "  \"description\": \"사용자가 3회 연속 로그인에 실패했습니다.\"\n" +
+            "  \"id\": \"test-resource-%s\",\n" +
+            "  \"clientIp\": \"167.10.31.130\",\n" +
+            "  \"eventTimeKST\": \"%s+09:00\",\n" +
+            "  \"granted\": false,\n" +
+            "  \"methodName\": \"getResource\",\n" +
+            "  \"operation\": \"READ\",\n" +
+            "  \"principal\": \"user123\",\n" +
+            "  \"processingTimeKST\": \"%s+09:00\",\n" +
+            "  \"resourceName\": \"/api/secure/data\",\n" +
+            "  \"resourceType\": \"REST_API\"\n" +
             "}",
-            LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))
+            System.currentTimeMillis(),
+            LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSSSS")),
+            LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSSSS"))
         );
         
         Map<String, Object> response = new HashMap<>();
@@ -157,16 +160,20 @@ public class TestController {
         
         String testMessage = String.format(
             "{\n" +
-            "  \"testMode\": true,\n" +
-            "  \"alertType\": \"SYSTEM_CRITICAL\",\n" +
-            "  \"timestamp\": \"%s\",\n" +
-            "  \"userId\": \"admin\",\n" +
-            "  \"action\": \"unauthorized_system_access\",\n" +
-            "  \"severity\": \"CRITICAL\",\n" +
-            "  \"ip\": \"192.168.1.100\",\n" +
-            "  \"description\": \"시스템 관리자 권한으로 무단 접근 시도가 감지되었습니다.\"\n" +
+            "  \"id\": \"test-system-%s\",\n" +
+            "  \"clientIp\": \"253.204.67.41\",\n" +
+            "  \"eventTimeKST\": \"%s+09:00\",\n" +
+            "  \"granted\": false,\n" +
+            "  \"methodName\": \"systemOperation\",\n" +
+            "  \"operation\": \"ADMIN\",\n" +
+            "  \"principal\": \"user123\",\n" +
+            "  \"processingTimeKST\": \"%s+09:00\",\n" +
+            "  \"resourceName\": \"system/config\",\n" +
+            "  \"resourceType\": \"SYSTEM\"\n" +
             "}",
-            LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))
+            System.currentTimeMillis(),
+            LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSSSS")),
+            LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSSSS"))
         );
         
         Map<String, Object> response = new HashMap<>();
