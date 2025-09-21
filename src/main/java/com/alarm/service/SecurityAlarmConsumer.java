@@ -76,8 +76,8 @@ public class SecurityAlarmConsumer {
         log.info("수신 데이터: {}", message);
         
         try {
-            // 유저/리소스 개발자에게 이메일 발송
-            emailService.sendResourceLevelAlert(topic, message);
+            // 인증 실패 전용 이메일 발송
+            emailService.sendAuthFailureAlert(topic, message);
             log.info("✅ 인증 2회 시도 보안 알람 처리 완료: {}", topic);
         } catch (Exception e) {
             log.error("❌ 인증 2회 시도 보안 알람 처리 실패: {} - {}", topic, e.getMessage(), e);
@@ -99,14 +99,16 @@ public class SecurityAlarmConsumer {
         log.info("수신 데이터: {}", message);
         
         try {
-            // 유저/리소스 개발자에게 이메일 발송
-            emailService.sendResourceLevelAlert(topic, message);
+            // 위치 변경 전용 이메일 발송
+            emailService.sendLocationChangeAlert(topic, message);
             log.info("✅ 인증 후 미이동 보안 알람 처리 완료: {}", topic);
         } catch (Exception e) {
             log.error("❌ 인증 후 미이동 보안 알람 처리 실패: {} - {}", topic, e.getMessage(), e);
         }
     }
 }
+
+
 
 
 

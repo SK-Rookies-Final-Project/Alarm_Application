@@ -55,6 +55,30 @@ public class EmailService {
     }
 
     /**
+     * 인증 실패 보안 알람을 유저/리소스 개발자에게 발송 (certified-2time)
+     */
+    @Async
+    public void sendAuthFailureAlert(String topicName, String messageData) {
+        String subject = "[🔐 인증 실패 보안 알람] " + topicName + " 토픽에서 인증 실패 이벤트 감지";
+        String content = buildAuthFailureAlertContent(topicName, messageData);
+        
+        sendEmail(userResourceDeveloperEmail, subject, content);
+        log.info("인증 실패 보안 알람 발송 완료: {} -> {}", topicName, userResourceDeveloperEmail);
+    }
+
+    /**
+     * 위치 변경 보안 알람을 유저/리소스 개발자에게 발송 (certified-notMove)
+     */
+    @Async
+    public void sendLocationChangeAlert(String topicName, String messageData) {
+        String subject = "[🌍 위치 변경 보안 알람] " + topicName + " 토픽에서 위치 변경 이벤트 감지";
+        String content = buildLocationChangeAlertContent(topicName, messageData);
+        
+        sendEmail(userResourceDeveloperEmail, subject, content);
+        log.info("위치 변경 보안 알람 발송 완료: {} -> {}", topicName, userResourceDeveloperEmail);
+    }
+
+    /**
      * 이메일 발송 공통 메서드
      */
     private void sendEmail(String to, String subject, String content) {
@@ -256,6 +280,144 @@ public class EmailService {
     private String getJsonValue(JsonNode jsonNode, String fieldName, String defaultValue) {
         JsonNode node = jsonNode.get(fieldName);
         return node != null ? node.asText() : defaultValue;
+    }
+
+    /**
+     * 인증 실패 데이터 파싱 및 포맷팅 (certified-2time)
+     */
+    private String parseAndFormatAuthFailureData(String messageData) {
+        try {
+            JsonNode jsonNode = objectMapper.readTree(messageData);
+            
+            return String.format(
+                """
+                🔐 인증 실패 이벤트 상세 정보:
+                
+                📋 이벤트 ID: %s
+                🕐 알람 시간: %s
+                🔍 알람 유형: %s
+                🌐 클라이언트 IP: %s
+                📝 설명: %s
+                🔢 실패 횟수: %s
+                
+                🚨 보안 위험도: 높음 (연속 인증 실패)
+                ⚠️  브루트 포스 공격 가능성을 검토해주세요.
+                """,
+                getJsonValue(jsonNode, "id", "N/A"),
+                formatTimestamp(getJsonValue(jsonNode, "alertTimeKST", "")),
+                getJsonValue(jsonNode, "alertType", "N/A"),
+                getJsonValue(jsonNode, "clientIp", "N/A"),
+                getJsonValue(jsonNode, "description", "N/A"),
+                getJsonValue(jsonNode, "failureCount", "N/A")
+            );
+        } catch (Exception e) {
+            log.warn("인증 실패 JSON 파싱 실패, 원본 데이터 사용: {}", e.getMessage());
+            return "📝 수신된 데이터:\n" + messageData;
+        }
+    }
+
+    /**
+     * 위치 변경 데이터 파싱 및 포맷팅 (certified-notMove)
+     */
+    private String parseAndFormatLocationChangeData(String messageData) {
+        try {
+            JsonNode jsonNode = objectMapper.readTree(messageData);
+            
+            return String.format(
+                """
+                🌍 위치 변경 이벤트 상세 정보:
+                
+                📋 이벤트 ID: %s
+                🕐 알람 시간: %s
+                🔍 알람 유형: %s
+                🌐 클라이언트 IP: %s
+                📝 설명: %s
+                🔢 실패 횟수: %s
+                
+                🚨 보안 위험도: 높음 (비정상적인 위치 접근)
+                ⚠️  지리적 위치 변경을 검토하고 정당한 접근인지 확인해주세요.
+                """,
+                getJsonValue(jsonNode, "id", "N/A"),
+                formatTimestamp(getJsonValue(jsonNode, "alertTimeKST", "")),
+                getJsonValue(jsonNode, "alertType", "N/A"),
+                getJsonValue(jsonNode, "clientIp", "N/A"),
+                getJsonValue(jsonNode, "description", "N/A"),
+                getJsonValue(jsonNode, "failureCount", "N/A")
+            );
+        } catch (Exception e) {
+            log.warn("위치 변경 JSON 파싱 실패, 원본 데이터 사용: {}", e.getMessage());
+            return "📝 수신된 데이터:\n" + messageData;
+        }
+    }
+
+    /**
+     * 인증 실패 알람 내용 구성
+     */
+    private String buildAuthFailureAlertContent(String topicName, String messageData) {
+        String formattedData = parseAndFormatAuthFailureData(messageData);
+        
+        return String.format(
+            """
+            🔐 인증 실패 보안 알람 🔐
+            
+            ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+            
+            📅 알람 발생 시간: %s
+            📋 토픽 이름: %s
+            🔍 알람 유형: 인증 실패 보안 이벤트
+            👤 담당자: 유저/리소스 개발자
+            
+            ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+            
+            %s
+            
+            ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+            
+            🚨 연속된 인증 실패가 감지되었습니다. 브루트 포스 공격 가능성을 검토해주세요.
+            🔒 필요시 해당 IP 주소에 대한 차단 조치를 고려해주세요.
+            📞 문의사항이 있으시면 보안팀에 연락해주세요.
+            
+            🤖 이 메일은 알람 서버에서 자동으로 발송되었습니다.
+            """,
+            LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")),
+            topicName,
+            formattedData
+        );
+    }
+
+    /**
+     * 위치 변경 알람 내용 구성
+     */
+    private String buildLocationChangeAlertContent(String topicName, String messageData) {
+        String formattedData = parseAndFormatLocationChangeData(messageData);
+        
+        return String.format(
+            """
+            🌍 위치 변경 보안 알람 🌍
+            
+            ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+            
+            📅 알람 발생 시간: %s
+            📋 토픽 이름: %s
+            🔍 알람 유형: 위치 변경 보안 이벤트
+            👤 담당자: 유저/리소스 개발자
+            
+            ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+            
+            %s
+            
+            ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+            
+            🌍 비정상적인 위치에서의 접근 시도가 감지되었습니다.
+            🔍 사용자의 지리적 위치 변경을 검토하고 정당한 접근인지 확인해주세요.
+            📞 문의사항이 있으시면 보안팀에 연락해주세요.
+            
+            🤖 이 메일은 알람 서버에서 자동으로 발송되었습니다.
+            """,
+            LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")),
+            topicName,
+            formattedData
+        );
     }
 
     /**
